@@ -38,3 +38,25 @@ export const getNextListPrefix = (
  * Adapted from https://stackoverflow.com/a/60548119
  */
 export const isNumeric = (input: string) => input.length > 0 && !isNaN(+input);
+
+/**
+ * Checks if the given file path is within the daily notes directory
+ */
+export const isFileInDailyNotesDir = (
+	filePath: string | undefined,
+	dailyNotesDirectory: string
+): boolean => {
+	if (!filePath) return false;
+	return filePath.includes(dailyNotesDirectory);
+};
+
+/**
+ * Gets the current time formatted as HH:MM
+ */
+export const getCurrentTimeFormatted = (): string => {
+	return new Date().toLocaleTimeString([], {
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	});
+};

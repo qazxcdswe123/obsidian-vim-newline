@@ -1,15 +1,20 @@
 import { App, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
 
-import { getNextListPrefix } from "./utils";
+import { getNextListPrefix, isFileInDailyNotesDir, getCurrentTimeFormatted } from "./utils";
+import { FolderSuggest } from "./ui/file-suggest";
 
 // Remember to rename these classes and interfaces!
 
 interface UserSettings {
 	autoInsertListPrefix: boolean;
+	dailyNotesDirectory: string;
+	insertTimeInDailyNotes: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
 	autoInsertListPrefix: true,
+	dailyNotesDirectory: "",
+	insertTimeInDailyNotes: false,
 };
 
 export default class SmartNewlinePlugin extends Plugin {
@@ -72,7 +77,7 @@ export default class SmartNewlinePlugin extends Plugin {
 		const line = editor.getLine(cursor.line);
 
 		// Get the indentation of the current line
-		const indentation = line.match(/^\s*/)?.[0] || '';
+		const indentation = line.match(/^\s*/)?.[0] || "";
 
 		// Get the appropriate list prefix based on the current line
 		const prefix = getNextListPrefix(line, direction);
@@ -103,6 +108,19 @@ export default class SmartNewlinePlugin extends Plugin {
 			editor.setCursor({
 				line: editor.getCursor().line,
 				ch: indentation.length + prefix.length,
+			});
+		}
+
+		// Check if time should be inserted for daily notes
+		if (
+			this.settings.insertTimeInDailyNotes &&
+			isFileInDailyNotesDir(view.file?.path, this.settings.dailyNotesDirectory)
+		) {
+			const currentTime = getCurrentTimeFormatted();
+			editor.replaceRange(currentTime + " ", editor.getCursor());
+			editor.setCursor({
+				line: editor.getCursor().line,
+				ch: editor.getCursor().ch + currentTime.length + 1,
 			});
 		}
 	}
@@ -146,5 +164,41 @@ class SettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		containerEl.createEl("h3", { text: "Daily Notes Time Insertion" });
+
+		new Setting(containerEl)
+			.setName("Insert Time in Daily Notes")
+			.setDesc(
+				"Automatically insert the current time when creating a new line in daily notes"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.insertTimeInDailyNotes)
+					.onChange(async (value) => {
+						this.plugin.settings.insertTimeInDailyNotes = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Daily Notes Directory")
+			.setDesc(
+				"Path to your daily notes folder. Plugin will insert time in files within this directory."
+			)
+			.addText((text) => {
+				const textEl = text
+					.setPlaceholder("dailies")
+					.setValue(this.plugin.settings.dailyNotesDirectory)
+					.onChange(async (value) => {
+						this.plugin.settings.dailyNotesDirectory = value;
+						await this.plugin.saveSettings();
+					});
+				
+				// Add folder suggestion functionality
+				new FolderSuggest(this.app, textEl.inputEl);
+				
+				return textEl;
+			});
 	}
 }
