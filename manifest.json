@@ -5,7 +5,6 @@
 	"minAppVersion": "0.15.0",
 	"description": "Context-aware newline behavior for Vim mode in Obsidian.",
 	"author": "YuNing Chen",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"authorUrl": "https://github.com/qazxcdswe123",
 	"isDesktopOnly": false
 }
