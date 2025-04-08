@@ -71,6 +71,9 @@ export default class SmartNewlinePlugin extends Plugin {
 		const cursor = editor.getCursor();
 		const line = editor.getLine(cursor.line);
 
+		// Get the indentation of the current line
+		const indentation = line.match(/^\s*/)?.[0] || '';
+
 		// Get the appropriate list prefix based on the current line
 		const prefix = getNextListPrefix(line, direction);
 
@@ -85,12 +88,21 @@ export default class SmartNewlinePlugin extends Plugin {
 			editor.setCursor({ line: cursor.line, ch: 0 });
 		}
 
+		// Insert the indentation
+		if (indentation) {
+			editor.replaceRange(indentation, editor.getCursor());
+			editor.setCursor({
+				line: editor.getCursor().line,
+				ch: indentation.length,
+			});
+		}
+
 		// Insert the list prefix if it exists and is not null
 		if (prefix !== null) {
 			editor.replaceRange(prefix, editor.getCursor());
 			editor.setCursor({
 				line: editor.getCursor().line,
-				ch: prefix.length,
+				ch: indentation.length + prefix.length,
 			});
 		}
 	}
