@@ -1,6 +1,10 @@
 import { App, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
 
-import { getNextListPrefix, isFileInDailyNotesDir, getCurrentTimeFormatted } from "./utils";
+import {
+	getNextListPrefix,
+	isFileInDailyNotesDir,
+	getCurrentTimeFormatted,
+} from "./utils";
 import { FolderSuggest } from "./ui/file-suggest";
 
 // Remember to rename these classes and interfaces!
@@ -103,18 +107,25 @@ export default class SmartNewlinePlugin extends Plugin {
 		}
 
 		// Insert the list prefix if it exists and is not null
+		let hasList = false;
 		if (prefix !== null) {
 			editor.replaceRange(prefix, editor.getCursor());
 			editor.setCursor({
 				line: editor.getCursor().line,
 				ch: indentation.length + prefix.length,
 			});
+			hasList = prefix !== "";
 		}
 
 		// Check if time should be inserted for daily notes
+		// Only insert time if we're in a daily note AND the line has a list prefix
 		if (
 			this.settings.insertTimeInDailyNotes &&
-			isFileInDailyNotesDir(view.file?.path, this.settings.dailyNotesDirectory)
+			isFileInDailyNotesDir(
+				view.file?.path,
+				this.settings.dailyNotesDirectory
+			) &&
+			hasList
 		) {
 			const currentTime = getCurrentTimeFormatted();
 			editor.replaceRange(currentTime + " ", editor.getCursor());
@@ -170,7 +181,7 @@ class SettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Insert Time in Daily Notes")
 			.setDesc(
-				"Automatically insert the current time when creating a new line in daily notes"
+				"Automatically insert the current time when creating a new list in daily notes"
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -194,10 +205,10 @@ class SettingTab extends PluginSettingTab {
 						this.plugin.settings.dailyNotesDirectory = value;
 						await this.plugin.saveSettings();
 					});
-				
+
 				// Add folder suggestion functionality
 				new FolderSuggest(this.app, textEl.inputEl);
-				
+
 				return textEl;
 			});
 	}
